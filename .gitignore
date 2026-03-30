@@ -1,0 +1,30 @@
+# ─── Virtual Environment ─────────────────────────
+venv/
+.venv/
+env/
+
+# ─── Data (trop lourd pour GitHub) ───────────────
+data/
+*.csv
+*.zip
+
+# ─── Models (trop lourd) ─────────────────────────
+results/models/*.h5
+results/models/*.keras
+*.pkl
+
+# ─── Python ──────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ─── Jupyter ─────────────────────────────────────
+.ipynb_checkpoints/
+
+# ─── IDE ─────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+
+# ─── TensorFlow Logs ─────────────────────────────
+results/logs/
