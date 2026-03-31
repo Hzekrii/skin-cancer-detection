@@ -1,5 +1,6 @@
 """
 Centralized configuration for the Skin Cancer Detection project.
+Optimized for CPU training (no GPU).
 """
 
 import os
@@ -16,8 +17,8 @@ for d in [MODELS_DIR, FIGURES_DIR]:
     os.makedirs(d, exist_ok=True)
 
 # ─── Dataset ─────────────────────────────────────────────
-IMAGE_SIZE = (224, 224)
-BATCH_SIZE = 32
+IMAGE_SIZE = (128, 128)    # ⚡ Réduit (au lieu de 224x224) → 3x plus rapide
+BATCH_SIZE = 16            # ⚡ Réduit (au lieu de 32) → moins de RAM
 TEST_SPLIT = 0.15
 VAL_SPLIT = 0.15
 RANDOM_STATE = 42
@@ -45,13 +46,14 @@ CLASS_LABELS = {
 
 NUM_CLASSES = len(CLASSES)
 
-# ─── Training ────────────────────────────────────────────
-EPOCHS = 30
-LEARNING_RATE = 1e-4
-FINE_TUNE_LEARNING_RATE = 1e-5
+# ─── Training (optimisé CPU) ─────────────────────────────
+EPOCHS = 15                    # ⚡ Réduit (au lieu de 30)
+FINE_TUNE_EPOCHS = 10          # ⚡ Epochs pour le fine-tuning
+LEARNING_RATE = 1e-3           # ⚡ Plus élevé (converge plus vite)
+FINE_TUNE_LEARNING_RATE = 1e-4
 DROPOUT_RATE = 0.4
-FINE_TUNE_AT_LAYER = 100  # Dégeler à partir de cette couche
+FINE_TUNE_AT_LAYER = 80       # ⚡ Ajusté pour MobileNetV2
 
 # ─── Model ───────────────────────────────────────────────
-BACKBONE = "efficientnet"  # "resnet50" ou "efficientnet"
+BACKBONE = "mobilenet"         # ⚡ MobileNetV2 (10x plus léger que EfficientNetB3)
 MODEL_CHECKPOINT_PATH = os.path.join(MODELS_DIR, "best_model.keras")
