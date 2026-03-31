@@ -245,10 +245,10 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## 👤 Author
 
-**Ton Nom**
+**Hamza Zekri**
 
-- GitHub: [@ton_username](https://github.com/ton_username)
-- LinkedIn: [Ton Profil](https://linkedin.com/in/ton-profil)
+- GitHub: [@Hamza Zekri](https://github.com/Hzekrii)
+- LinkedIn: [Hamza Zekri](www.linkedin.com/in/hamza-zekri-20088a238/)
 
 ---
 
