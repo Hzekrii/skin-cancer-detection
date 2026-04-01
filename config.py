@@ -47,12 +47,12 @@ CLASS_LABELS = {
 NUM_CLASSES = len(CLASSES)
 
 # ─── Training (optimisé CPU) ─────────────────────────────
-EPOCHS = 15                    # ⚡ Réduit (au lieu de 30)
-FINE_TUNE_EPOCHS = 10          # ⚡ Epochs pour le fine-tuning
-LEARNING_RATE = 1e-3           # ⚡ Plus élevé (converge plus vite)
+EPOCHS = 20                    # ⬆️ Augmenté (au lieu de 15)
+FINE_TUNE_EPOCHS = 15          # ⬆️ Augmenté (au lieu de 10)
+LEARNING_RATE = 5e-4           # ⬇️ Réduit (au lieu de 1e-3, plus stable)
 FINE_TUNE_LEARNING_RATE = 1e-4
 DROPOUT_RATE = 0.4
-FINE_TUNE_AT_LAYER = 80       # ⚡ Ajusté pour MobileNetV2
+FINE_TUNE_AT_LAYER = 100       # ⬆️ Dégeler moins de couches (plus stable)
 
 # ─── Model ───────────────────────────────────────────────
 BACKBONE = "mobilenet"         # ⚡ MobileNetV2 (10x plus léger que EfficientNetB3)
