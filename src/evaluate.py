@@ -13,7 +13,9 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     roc_curve,
-    auc
+    auc,
+    f1_score,
+    accuracy_score
 )
 from sklearn.preprocessing import label_binarize
 
@@ -40,10 +42,14 @@ def predict_on_test(model, test_ds):
     y_pred_proba = []
 
     print("[INFO] Generating predictions on test set...")
+    total_batches = 0
     for images, labels in test_ds:
         preds = model.predict(images, verbose=0)
         y_pred_proba.append(preds)
         y_true.append(labels.numpy())
+        total_batches += 1
+
+    print(f"[INFO] Processed {total_batches} batches")
 
     y_true = np.concatenate(y_true, axis=0)
     y_pred_proba = np.concatenate(y_pred_proba, axis=0)
@@ -61,7 +67,7 @@ def plot_confusion_matrix(y_true, y_pred, save=True):
 
     fig, axes = plt.subplots(1, 2, figsize=(20, 8))
 
-    # Matrice brute (counts)
+    # Matrice brute
     sns.heatmap(
         cm, annot=True, fmt="d", cmap="Blues",
         xticklabels=config.CLASSES, yticklabels=config.CLASSES,
@@ -71,7 +77,7 @@ def plot_confusion_matrix(y_true, y_pred, save=True):
     axes[0].set_xlabel("Predicted", fontsize=12)
     axes[0].set_ylabel("Actual", fontsize=12)
 
-    # Matrice normalisée (pourcentages)
+    # Matrice normalisée
     sns.heatmap(
         cm_normalized, annot=True, fmt=".2f", cmap="Oranges",
         xticklabels=config.CLASSES, yticklabels=config.CLASSES,
@@ -82,7 +88,7 @@ def plot_confusion_matrix(y_true, y_pred, save=True):
     axes[1].set_ylabel("Actual", fontsize=12)
 
     plt.tight_layout()
-    
+
     if save:
         path = os.path.join(config.FIGURES_DIR, "confusion_matrix.png")
         plt.savefig(path, dpi=150, bbox_inches="tight")
@@ -91,15 +97,17 @@ def plot_confusion_matrix(y_true, y_pred, save=True):
 
 
 def plot_roc_curves(y_true, y_pred_proba, save=True):
-    """Trace les courbes ROC One-vs-Rest pour chaque classe."""
+    """Trace les courbes ROC One-vs-Rest."""
     y_true_bin = label_binarize(y_true, classes=range(config.NUM_CLASSES))
 
     plt.figure(figsize=(10, 8))
     colors = plt.cm.Set1(np.linspace(0, 1, config.NUM_CLASSES))
 
+    auc_scores = {}
     for i, (cls, color) in enumerate(zip(config.CLASSES, colors)):
         fpr, tpr, _ = roc_curve(y_true_bin[:, i], y_pred_proba[:, i])
         roc_auc = auc(fpr, tpr)
+        auc_scores[cls] = roc_auc
         plt.plot(
             fpr, tpr,
             color=color, linewidth=2,
@@ -119,6 +127,8 @@ def plot_roc_curves(y_true, y_pred_proba, save=True):
         plt.savefig(path, dpi=150, bbox_inches="tight")
         print(f"[INFO] Saved: {path}")
     plt.close()
+
+    return auc_scores
 
 
 def plot_per_class_metrics(y_true, y_pred, save=True):
@@ -148,10 +158,9 @@ def plot_per_class_metrics(y_true, y_pred, save=True):
     ax.set_xticks(x)
     ax.set_xticklabels(classes, fontsize=10)
     ax.legend(fontsize=11)
-    ax.set_ylim(0, 1.1)
+    ax.set_ylim(0, 1.15)
     ax.grid(True, alpha=0.3, axis="y")
 
-    # Valeurs sur les barres
     for bars in [bars1, bars2, bars3]:
         for bar in bars:
             height = bar.get_height()
@@ -164,9 +173,63 @@ def plot_per_class_metrics(y_true, y_pred, save=True):
             )
 
     plt.tight_layout()
-    
+
     if save:
         path = os.path.join(config.FIGURES_DIR, "per_class_metrics.png")
+        plt.savefig(path, dpi=150, bbox_inches="tight")
+        print(f"[INFO] Saved: {path}")
+    plt.close()
+
+
+def plot_prediction_samples(model, test_df, n_samples=16, save=True):
+    """Affiche des exemples de prédictions correctes et incorrectes."""
+    from src.dataset import _parse_image
+
+    # Prendre des échantillons aléatoires
+    samples = test_df.sample(n=min(n_samples, len(test_df)), random_state=42)
+
+    cols = 4
+    rows = (n_samples + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4.5 * rows))
+    axes = axes.flatten()
+
+    for idx, (_, row) in enumerate(samples.iterrows()):
+        if idx >= n_samples:
+            break
+
+        # Charger et prédire
+        img = tf.io.read_file(row["image_path"])
+        img = tf.image.decode_jpeg(img, channels=3)
+        img = tf.image.resize(img, config.IMAGE_SIZE)
+        img_display = tf.cast(img, tf.uint8).numpy()
+        img_norm = tf.cast(img, tf.float32) / 255.0
+        img_batch = tf.expand_dims(img_norm, 0)
+
+        preds = model.predict(img_batch, verbose=0)
+        pred_class = np.argmax(preds[0])
+        confidence = preds[0][pred_class]
+        pred_name = config.CLASSES[pred_class]
+        true_name = row["dx"]
+
+        correct = pred_name == true_name
+        color = "green" if correct else "red"
+        symbol = "✓" if correct else "✗"
+
+        axes[idx].imshow(img_display)
+        axes[idx].set_title(
+            f"True: {true_name}\nPred: {pred_name} ({confidence:.0%}) [{symbol}]",
+            fontsize=9, color=color, fontweight="bold"
+        )
+        axes[idx].axis("off")
+
+    for idx in range(len(samples), len(axes)):
+        axes[idx].set_visible(False)
+
+    plt.suptitle("Prediction Samples", fontsize=16, fontweight="bold")
+    plt.tight_layout()
+
+    if save:
+        path = os.path.join(config.FIGURES_DIR, "prediction_samples.png")
         plt.savefig(path, dpi=150, bbox_inches="tight")
         print(f"[INFO] Saved: {path}")
     plt.close()
@@ -185,12 +248,31 @@ def print_classification_report(y_true, y_pred):
     print("=" * 70)
     print(report)
 
+    # Métriques globales
+    acc = accuracy_score(y_true, y_pred)
+    f1_macro = f1_score(y_true, y_pred, average="macro")
+    f1_weighted = f1_score(y_true, y_pred, average="weighted")
+
+    summary = (
+        f"\n{'='*50}\n"
+        f"  SUMMARY\n"
+        f"{'='*50}\n"
+        f"  Accuracy:          {acc:.4f} ({acc*100:.2f}%)\n"
+        f"  F1-Score (macro):  {f1_macro:.4f}\n"
+        f"  F1-Score (weighted): {f1_weighted:.4f}\n"
+        f"{'='*50}\n"
+    )
+    print(summary)
+
     # Sauvegarder
     report_path = os.path.join(config.RESULTS_DIR, "classification_report.txt")
     with open(report_path, "w") as f:
         f.write("SKIN CANCER CLASSIFICATION — TEST SET RESULTS\n")
+        f.write(f"Model: {config.BACKBONE}\n")
+        f.write(f"Image Size: {config.IMAGE_SIZE}\n")
         f.write("=" * 60 + "\n\n")
         f.write(report)
+        f.write(summary)
     print(f"[INFO] Saved: {report_path}")
 
     return report
@@ -198,37 +280,38 @@ def print_classification_report(y_true, y_pred):
 
 def evaluate():
     """Pipeline d'évaluation complet."""
-    
+
     print("\n" + "=" * 60)
     print("  MODEL EVALUATION")
     print("=" * 60)
 
-    # Charger le modèle
+    # Charger modèle + données
     model = load_best_model()
-    
-    # Charger les données
     _, _, test_ds, _, test_df = get_datasets()
 
     # Prédictions
     y_true, y_pred, y_pred_proba = predict_on_test(model, test_ds)
 
-    # Métriques
+    # Rapport de classification
     print_classification_report(y_true, y_pred)
-    
+
     # Visualisations
+    print("\n[INFO] Generating visualizations...")
     plot_confusion_matrix(y_true, y_pred)
-    plot_roc_curves(y_true, y_pred_proba)
+    auc_scores = plot_roc_curves(y_true, y_pred_proba)
     plot_per_class_metrics(y_true, y_pred)
+    plot_prediction_samples(model, test_df)
 
-    # Accuracy globale
-    accuracy = np.mean(y_true == y_pred)
-    print(f"\n{'='*50}")
-    print(f"  TEST ACCURACY: {accuracy:.4f} ({accuracy*100:.2f}%)")
-    print(f"{'='*50}")
+    # Afficher les AUC
+    print("\n[INFO] AUC Scores per class:")
+    for cls, score in auc_scores.items():
+        print(f"  {cls:>6s}: {score:.4f}")
+    mean_auc = np.mean(list(auc_scores.values()))
+    print(f"  {'MEAN':>6s}: {mean_auc:.4f}")
 
+    print("\n[✓] Evaluation complete!")
     return y_true, y_pred, y_pred_proba
 
 
-# ─── Point d'entrée ──────────────────────────────────────
 if __name__ == "__main__":
     evaluate()

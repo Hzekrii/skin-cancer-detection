@@ -2,10 +2,10 @@
 Main entry point for the Skin Cancer Classification project.
 
 Usage:
-    python main.py --mode all       # Full pipeline
-    python main.py --mode train     # Train only
-    python main.py --mode evaluate  # Evaluate only
-    python main.py --mode gradcam   # Grad-CAM only
+    python main.py --mode all
+    python main.py --mode train
+    python main.py --mode evaluate
+    python main.py --mode gradcam
 """
 
 import argparse
@@ -27,14 +27,14 @@ print("=" * 60)
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Skin Cancer Classification with Transfer Learning & Grad-CAM"
+        description="Skin Cancer Classification"
     )
     parser.add_argument(
         "--mode",
         type=str,
         default="all",
         choices=["all", "train", "evaluate", "gradcam"],
-        help="Execution mode (default: all)"
+        help="Execution mode"
     )
     args = parser.parse_args()
 
@@ -61,7 +61,11 @@ def main():
         print("🔍 " * 20)
         import config
         from src.dataset import get_datasets
-        from src.gradcam import visualize_gradcam_grid, visualize_gradcam_single
+        from src.gradcam import (
+            visualize_gradcam_grid,
+            visualize_gradcam_single,
+            GradCAM
+        )
 
         model = tf.keras.models.load_model(config.MODEL_CHECKPOINT_PATH)
         _, _, _, _, test_df = get_datasets()
@@ -69,13 +73,15 @@ def main():
         # Grille Grad-CAM
         visualize_gradcam_grid(model, test_df, n_samples=12)
 
-        # Quelques exemples individuels
+        # Exemples individuels (réutiliser le même objet GradCAM)
+        gradcam_obj = None
         for i in range(3):
-            sample = test_df.sample(1, random_state=i).iloc[0]
-            visualize_gradcam_single(
+            sample = test_df.sample(1, random_state=i * 10).iloc[0]
+            gradcam_obj = visualize_gradcam_single(
                 model,
                 sample["image_path"],
                 true_label=sample["dx"],
+                gradcam_obj=gradcam_obj,
                 save_path=os.path.join(
                     config.FIGURES_DIR, f"gradcam_example_{i+1}.png"
                 )
