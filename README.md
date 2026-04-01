@@ -1,9 +1,9 @@
 # 🔬 Skin Cancer Classification Using Transfer Learning & Explainable AI
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.12+-orange.svg)
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.21-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)
+![Status](https://img.shields.io/badge/Status-Complete-brightgreen.svg)
 
 <p align="center">
   <img src="results/figures/gradcam_grid.png" width="800" alt="Grad-CAM Results"/>
@@ -11,7 +11,7 @@
 
 ## 📋 Overview
 
-A deep learning system for **automatic classification** of dermatoscopic images of skin lesions into **7 diagnostic categories**. The project leverages **Transfer Learning** with EfficientNetB3 and incorporates **Explainable AI** (Grad-CAM) to provide visual explanations of model predictions.
+A deep learning system for **automatic classification** of dermatoscopic images of skin lesions into **7 diagnostic categories**. The project leverages **Transfer Learning** with MobileNetV2 and incorporates **Explainable AI** (Grad-CAM) to provide visual explanations of model predictions.
 
 > ⚠️ **Disclaimer**: This project is for educational and research purposes only.  
 > It is NOT a substitute for professional medical diagnosis.
@@ -20,10 +20,10 @@ A deep learning system for **automatic classification** of dermatoscopic images 
 
 ## 🎯 Key Features
 
-- **Transfer Learning** with EfficientNetB3 pre-trained on ImageNet
-- **Two-phase training**: Feature extraction → Fine-tuning
-- **Class imbalance handling** with computed class weights
-- **Grad-CAM visualization** for model explainability
+- **Transfer Learning** with MobileNetV2 pre-trained on ImageNet
+- **Two-phase training**: Feature Extraction → Fine-Tuning
+- **Class imbalance handling** via computed class weights
+- **Grad-CAM** visualization for model explainability
 - **Interactive Streamlit app** for real-time predictions
 - **Comprehensive evaluation**: Confusion matrix, ROC curves, classification report
 
@@ -37,15 +37,15 @@ A deep learning system for **automatic classification** of dermatoscopic images 
 - **Size**: 10,015 dermatoscopic images
 - **Classes**: 7 diagnostic categories
 
-| Category | Code | Count | Description |
+| Category | Code | Count | Type |
 |---|---|---|---|
-| Melanocytic Nevi | `nv` | 6,705 | Benign mole |
-| Melanoma | `mel` | 1,113 | Malignant skin cancer |
-| Benign Keratosis | `bkl` | 1,099 | Seborrheic keratosis |
-| Basal Cell Carcinoma | `bcc` | 514 | Common skin cancer |
+| Melanocytic Nevi | `nv` | 6,705 | Benign |
+| Melanoma | `mel` | 1,113 | **Malignant** |
+| Benign Keratosis | `bkl` | 1,099 | Benign |
+| Basal Cell Carcinoma | `bcc` | 514 | **Malignant** |
 | Actinic Keratoses | `akiec` | 327 | Pre-cancerous |
-| Vascular Lesions | `vasc` | 142 | Blood vessel related |
-| Dermatofibroma | `df` | 115 | Benign skin growth |
+| Vascular Lesions | `vasc` | 142 | Benign |
+| Dermatofibroma | `df` | 115 | Benign |
 
 <p align="center">
   <img src="results/figures/class_distribution.png" width="600" alt="Class Distribution"/>
@@ -56,29 +56,33 @@ A deep learning system for **automatic classification** of dermatoscopic images 
 ## 🏗️ Model Architecture
 
 ```
-Input (224×224×3)
+Input (128×128×3)
 │
 ▼
-┌─────────────────────┐
-│   EfficientNetB3    │  ← Pre-trained on ImageNet (frozen → fine-tuned)
-│  (Feature Extractor)│
-└─────────┬───────────┘
-          │
-          ▼
-   Global Average Pooling 2D
-          │
-          ▼
-    BatchNormalization
-          │
-          ▼
+┌──────────────────────┐
+│     MobileNetV2      │  ← Pre-trained on ImageNet
+│  (Feature Extractor) │    Frozen → Fine-tuned
+└──────────┬───────────┘
+           │
+           ▼
+  Global Average Pooling 2D
+           │
+           ▼
+     BatchNormalization
+           │
+           ▼
   Dense(256, ReLU) → Dropout(0.4)
-          │
-          ▼
+           │
+           ▼
   Dense(128, ReLU) → Dropout(0.2)
-          │
-          ▼
+           │
+           ▼
   Dense(7, Softmax) → Output
 ```
+
+**Training Strategy:**
+- **Phase 1** — Feature Extraction: Backbone frozen, train head only (20 epochs)
+- **Phase 2** — Fine-Tuning: Unfreeze top layers, lower learning rate (15 epochs)
 
 ---
 
@@ -86,7 +90,7 @@ Input (224×224×3)
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/TON_USERNAME/skin-cancer-detection.git
+git clone https://github.com/Hzekrii/skin-cancer-detection.git
 cd skin-cancer-detection
 ```
 
@@ -94,7 +98,7 @@ cd skin-cancer-detection
 ```bash
 python -m venv venv
 source venv/bin/activate    # Linux/Mac
-# venv\Scripts\activate     # Windows
+# venv\Scripts\Activate     # Windows
 pip install -r requirements.txt
 ```
 
@@ -172,11 +176,11 @@ skin-cancer-detection/
 
 | Metric | Score |
 |---|---|
-| Accuracy | XX.X% |
-| Precision (macro) | XX.X% |
-| Recall (macro) | XX.X% |
-| F1-score (macro) | XX.X% |
-| AUC (macro) | 0.XXX |
+| **Test Accuracy** | 69.66% |
+| **F1-Score (weighted)** | 0.7127 |
+| **F1-Score (macro)** | 0.5181 |
+| **Mean AUC** | 0.8993 |
+| **Best AUC (Vascular)** | 0.9850 |
 
 ### Confusion Matrix
 <p align="center">
@@ -188,24 +192,35 @@ skin-cancer-detection/
   <img src="results/figures/roc_curves.png" width="600" alt="ROC Curves"/>
 </p>
 
+### Per-Class Metrics
+<p align="center">
+  <img src="results/figures/per_class_metrics.png" width="600" alt="Per-Class Metrics"/>
+</p>
+
 ### Grad-CAM Explanations
 <p align="center">
   <img src="results/figures/gradcam_grid.png" width="800" alt="Grad-CAM"/>
 </p>
+
+### Training History
+
+| Feature Extraction | Fine-Tuning |
+|---|---|
+| ![Phase 1](results/figures/training_history_feature_extraction.png) | ![Phase 2](results/figures/training_history_fine_tuning.png) |
 
 ---
 
 ## 🧠 Methodology
 
 ### 1. Data Preprocessing
-- Image resizing to 224×224 pixels
+- Image resizing to 128×128 pixels
 - Pixel normalization to [0, 1]
 - Stratified train/validation/test split (70/15/15)
 - Data augmentation: random flip, rotation, zoom, contrast, translation
 
 ### 2. Training Strategy
-- **Phase 1 — Feature Extraction**: Backbone frozen, train classification head only
-- **Phase 2 — Fine-tuning**: Unfreeze top layers, train with lower learning rate
+- **Phase 1 — Feature Extraction**: Backbone frozen, train classification head only (20 epochs)
+- **Phase 2 — Fine-Tuning**: Unfreeze top layers, train with lower learning rate (15 epochs)
 - **Class imbalance**: Handled via computed class weights
 - **Regularization**: Dropout, BatchNormalization, EarlyStopping
 
@@ -220,8 +235,9 @@ skin-cancer-detection/
 
 | Tool | Purpose |
 |---|---|
-| TensorFlow / Keras | Deep Learning framework |
-| EfficientNetB3 | Pre-trained CNN backbone |
+| TensorFlow 2.21 / Keras | Deep Learning framework |
+| MobileNetV2 | Pre-trained CNN backbone (Transfer Learning) |
+| Grad-CAM | Explainable AI |
 | Scikit-learn | Metrics & data splitting |
 | Matplotlib / Seaborn | Visualization |
 | OpenCV | Image processing |
@@ -232,7 +248,7 @@ skin-cancer-detection/
 ## 📚 References
 
 1. Tschandl, P. et al. *"The HAM10000 dataset"* (2018). Scientific Data.
-2. Tan, M. & Le, Q. *"EfficientNet: Rethinking Model Scaling for CNNs"* (2019). ICML.
+2. Sandler, M. et al. *"MobileNetV2: Inverted Residuals and Linear Bottlenecks"* (2018). CVPR.
 3. Selvaraju, R.R. et al. *"Grad-CAM: Visual Explanations from Deep Networks"* (2017). ICCV.
 
 ---

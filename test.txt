@@ -1,0 +1,379 @@
+Étape 4 : Mettre à jour README.md avec les vrais résultats
+
+Remplace tout le contenu de README.md :
+
+markdown
+
+# 🔬 Skin Cancer Classification Using Transfer Learning & Explainable AI
+
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.21-orange.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Status](https://img.shields.io/badge/Status-Complete-brightgreen.svg)
+
+A deep learning system for **automatic classification** of dermatoscopic images of skin lesions into **7 diagnostic categories** using **Transfer Learning** (MobileNetV2) and **Explainable AI** (Grad-CAM).
+
+> ⚠️ **Disclaimer**: This project is for educational purposes only. Not a substitute for professional medical diagnosis.
+
+---
+
+## 🎯 Key Features
+
+- **Transfer Learning** with MobileNetV2 pre-trained on ImageNet
+- **Two-phase training**: Feature Extraction → Fine-Tuning
+- **Class imbalance handling** via computed class weights
+- **Grad-CAM** visualization for model explainability
+- **Interactive Streamlit app** for real-time predictions
+- **Comprehensive evaluation**: Confusion matrix, ROC curves, classification report
+
+---
+
+## 📊 Results
+
+|
+ Metric 
+|
+ Score 
+|
+
+|
+--------
+|
+-------
+|
+
+|
+ 
+**
+Test Accuracy
+**
+ 
+|
+ 69.66% 
+|
+
+|
+ 
+**
+F1-Score (weighted)
+**
+ 
+|
+ 0.7127 
+|
+
+|
+ 
+**
+F1-Score (macro)
+**
+ 
+|
+ 0.5181 
+|
+
+|
+ 
+**
+Mean AUC
+**
+ 
+|
+ 0.8993 
+|
+
+|
+ 
+**
+Best AUC (Vascular)
+**
+ 
+|
+ 0.9850 
+|
+
+
+### Confusion Matrix
+![Confusion Matrix](results/figures/confusion_matrix.png)
+
+### ROC Curves
+![ROC Curves](results/figures/roc_curves.png)
+
+### Per-Class Metrics
+![Per-Class Metrics](results/figures/per_class_metrics.png)
+
+### Grad-CAM Explanations
+![Grad-CAM](results/figures/gradcam_grid.png)
+
+### Training History
+|
+ Feature Extraction 
+|
+ Fine-Tuning 
+|
+
+|
+---
+|
+---
+|
+
+|
+ 
+!
+[
+Phase 1
+](
+results/figures/training_history_feature_extraction.png
+)
+ 
+|
+ 
+!
+[
+Phase 2
+](
+results/figures/training_history_fine_tuning.png
+)
+ 
+|
+
+
+---
+
+## 📋 Dataset
+
+**HAM10000** — Human Against Machine with 10,000 training images
+
+|
+ Category 
+|
+ Code 
+|
+ Count 
+|
+ Type 
+|
+
+|
+----------
+|
+------
+|
+-------
+|
+------
+|
+
+|
+ Melanocytic Nevi 
+|
+ 
+`nv`
+ 
+|
+ 6,705 
+|
+ Benign 
+|
+
+|
+ Melanoma 
+|
+ 
+`mel`
+ 
+|
+ 1,113 
+|
+ 
+**
+Malignant
+**
+ 
+|
+
+|
+ Benign Keratosis 
+|
+ 
+`bkl`
+ 
+|
+ 1,099 
+|
+ Benign 
+|
+
+|
+ Basal Cell Carcinoma 
+|
+ 
+`bcc`
+ 
+|
+ 514 
+|
+ 
+**
+Malignant
+**
+ 
+|
+
+|
+ Actinic Keratoses 
+|
+ 
+`akiec`
+ 
+|
+ 327 
+|
+ Pre-cancerous 
+|
+
+|
+ Vascular Lesions 
+|
+ 
+`vasc`
+ 
+|
+ 142 
+|
+ Benign 
+|
+
+|
+ Dermatofibroma 
+|
+ 
+`df`
+ 
+|
+ 115 
+|
+ Benign 
+|
+
+
+![Class Distribution](results/figures/class_distribution.png)
+
+---
+
+## 🏗️ Model Architecture
+
+Input (128×128×3)
+│
+▼
+┌──────────────────────┐
+│ MobileNetV2 │ ← Pre-trained on ImageNet
+│ (Feature Extractor) │ Frozen → Fine-tuned
+└──────────┬───────────┘
+│
+▼
+Global Average Pooling 2D
+│
+▼
+BatchNormalization
+│
+▼
+Dense(256, ReLU) → Dropout(0.4)
+│
+▼
+Dense(128, ReLU) → Dropout(0.2)
+│
+▼
+Dense(7, Softmax) → Output
+
+text
+
+
+**Training Strategy:**
+- **Phase 1** — Feature Extraction: Backbone frozen, train head only (20 epochs)
+- **Phase 2** — Fine-Tuning: Unfreeze top layers, lower learning rate (15 epochs)
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone & Setup
+```bash
+git clone https://github.com/YOUR_USERNAME/skin-cancer-detection.git
+cd skin-cancer-detection
+python -m venv venv
+venv\Scripts\Activate      # Windows
+pip install -r requirements.txt
+
+2. Download Dataset
+
+Download HAM10000 from Kaggle and extract to data/HAM10000/
+3. Train
+
+bash
+
+python main.py --mode train
+
+4. Evaluate
+
+bash
+
+python main.py --mode evaluate
+
+5. Grad-CAM
+
+bash
+
+python main.py --mode gradcam
+
+6. Streamlit App
+
+bash
+
+streamlit run app/streamlit_app.py
+
+📁 Project Structure
+
+text
+
+skin-cancer-detection/
+├── app/
+│   └── streamlit_app.py       # Interactive web demo
+├── data/HAM10000/             # Dataset (not in git)
+├── notebooks/
+│   └── exploration.ipynb
+├── src/
+│   ├── __init__.py
+│   ├── dataset.py             # Data loading & augmentation
+│   ├── model.py               # Model architecture
+│   ├── train.py               # 2-phase training pipeline
+│   ├── evaluate.py            # Metrics & visualizations
+│   └── gradcam.py             # Grad-CAM explainability
+├── results/
+│   ├── figures/               # All generated plots
+│   └── models/                # Saved models (not in git)
+├── config.py                  # Centralized configuration
+├── main.py                    # Entry point
+├── requirements.txt
+└── README.md
+
+🛠️ Technologies
+Tool	Purpose
+TensorFlow 2.21	Deep Learning framework
+MobileNetV2	Pre-trained backbone (Transfer Learning)
+Grad-CAM	Explainable AI
+Scikit-learn	Evaluation metrics
+Matplotlib / Seaborn	Visualization
+Streamlit	Interactive web app
+📚 References
+
+    Tschandl, P. et al. "The HAM10000 dataset" (2018). Scientific Data.
+    Sandler, M. et al. "MobileNetV2: Inverted Residuals and Linear Bottlenecks" (2018). CVPR.
+    Selvaraju, R.R. et al. "Grad-CAM: Visual Explanations from Deep Networks" (2017). ICCV.
+
+📄 License
+
+MIT License — see LICENSE file.
+
+⭐ If you find this project useful, please give it a star!
